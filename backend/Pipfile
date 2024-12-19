@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pymongo = "*"
+pydantic = "*"
+python-dotenv = "*"
+openai = "*"
+sqlalchemy = "*"
+numpy = "*"
+psycopg2-binary = "*"
+pydantic-settings = "*"
+boto3 = "*"
+werkzeug = "*"
+langchain = "*"
+fastapi = "*"
+uvicorn = "*"
+python-multipart = "*"
+pgvector = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
