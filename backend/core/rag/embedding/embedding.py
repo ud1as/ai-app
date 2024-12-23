@@ -6,6 +6,8 @@ from configs.config import config
 OPENAI_API_KEY = config.OPENAI_API_KEY
 EMBEDDING_MODEL = config.EMBEDDING_MODEL
 
+print(EMBEDDING_MODEL)
+
 class OpenAIEmbedding(Embeddings):
     """OpenAI embedding implementation."""
     def __init__(self):
@@ -41,40 +43,3 @@ class OpenAIEmbedding(Embeddings):
             raise Exception(f"Error generating query embedding: {str(e)}")
 
 
-def test_embedding():
-    """Test function for OpenAI embeddings."""
-    try:
-        # Initialize embedding model
-        print("Initializing OpenAI embedding model...")
-        model = OpenAIEmbedding()
-        
-        # Test single query embedding
-        print("\nTesting single query embedding...")
-        query = "What is machine learning?"
-        query_embedding = model.embed_query(query)
-        print(f"Query embedding dimension: {len(query_embedding)}")
-        print(f"First few values: {query_embedding[:3]}")
-        
-        # Test document embeddings
-        print("\nTesting document embeddings...")
-        documents = [
-            "Machine learning is a branch of AI.",
-            "Natural language processing is fascinating."
-        ]
-        doc_embeddings = model.embed_documents(documents)
-        
-        for i, (doc, embedding) in enumerate(zip(documents, doc_embeddings)):
-            print(f"\nDocument {i+1}: {doc}")
-            print(f"Embedding dimension: {len(embedding)}")
-            print(f"First few values: {embedding[:3]}")
-            
-        print("\nAll tests passed successfully!")
-        return True
-        
-    except Exception as e:
-        print(f"\nTest failed with error: {str(e)}")
-        return False
-
-
-if __name__ == "__main__":
-    test_embedding()

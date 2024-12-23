@@ -110,11 +110,13 @@ class RetrievalService:
             top_k=top_k * 2,  # Get more results for better combination
             score_threshold=score_threshold
         )
-        
+        print(f"Semantic search results: {semantic_docs}")
+
         full_text_docs = vector.search_by_full_text(
             query=query,
             top_k=top_k * 2
         )
+        print(f"Full-text search results: {full_text_docs}")
         
         # Combine results with weighted scores
         doc_scores = {}
@@ -163,3 +165,7 @@ class RetrievalService:
     def _clean_query(query: str) -> str:
         """Clean and prepare query for search."""
         return query.replace('"', '\\"').strip()
+    
+    
+    
+    

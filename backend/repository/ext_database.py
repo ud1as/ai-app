@@ -1,9 +1,18 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import sessionmaker, scoped_session
-from configs.config import config  # Import your config
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.exc import OperationalError
+from configs.config import Settings  # Import your settings
 
+# Load PostgreSQL credentials from settings
+settings = Settings()
 
+# SQLAlchemy database URL
+DATABASE_URL = (
+    f"postgresql+psycopg2://{settings.PGVECTOR_USER}:{settings.PGVECTOR_PASSWORD}"
+    f"@{settings.PGVECTOR_HOST}:{settings.PGVECTOR_PORT}/{settings.PGVECTOR_DATABASE}"
+)
+
+# Index naming convention
 POSTGRES_INDEXES_NAMING_CONVENTION = {
     "ix": "%(column_0_label)s_idx",
     "uq": "%(table_name)s_%(column_0_name)s_key",
@@ -12,15 +21,12 @@ POSTGRES_INDEXES_NAMING_CONVENTION = {
     "pk": "%(table_name)s_pkey",
 }
 
+# SQLAlchemy setup
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 metadata = MetaData(naming_convention=POSTGRES_INDEXES_NAMING_CONVENTION)
 Base = declarative_base(metadata=metadata)
 
-DATABASE_URL = f"postgresql://{config.PG_USER}:{config.PG_PASSWORD}@{config.PG_HOST}:{config.PG_PORT}/{config.PG_DATABASE}"
+# Session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-engine = create_engine(DATABASE_URL, echo=True)
-SessionFactory = sessionmaker(bind=engine)
-db = scoped_session(SessionFactory)
-
-def init_db():
-    """Initialize database"""
-    Base.metadata.create_all(engine)
+db = SessionLocal()

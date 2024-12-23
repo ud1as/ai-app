@@ -4,24 +4,34 @@ from core.memory.memory import TokenBufferMemoryMongoDB
 from core.llm.openai_client import OpenAIClient
 from core.rag.retrieve.retrieval_service import RetrievalService, RetrievalMethod
 from core.entities import PromptMessage
+from pymongo import MongoClient
 from core.rag.datasource.document import Document
+from configs.config import config
+from service.dataset_retrieve import DatasetRetrievalService
 
 class ChatAssistant:
     def __init__(self, memory: TokenBufferMemoryMongoDB):
         self.memory = memory
         self.openai_client = OpenAIClient()
-        self.retrieval_service = RetrievalService()
+        self.retrieval_service = DatasetRetrievalService()
 
     def get_relevant_context(self, dataset_id: str, query: str) -> List[Document]:
         """Get relevant documents using hybrid search."""
-        return self.retrieval_service.retrieve(
-            dataset_id=dataset_id,
-            query=query,
-            search_method=RetrievalMethod.HYBRID_SEARCH,
-            top_k=3,
-            score_threshold=0.5,
-            hybrid_weights={'semantic': 0.7, 'full_text': 0.3}
-        )
+        try:
+            results = self.retrieval_service.retrieve_documents(
+                dataset_id=dataset_id,
+                query=query,
+                search_method="hybrid",
+                top_k=3,
+                score_threshold=0.5,
+                hybrid_weights={"semantic": 0.5, "full_text": 0.5}
+            )
+            print(f"Retrieved results: {results}")
+            return results
+        except Exception as e:
+            print(f"Error during retrieval: {e}")
+            return []
+
 
     def format_context(self, documents: List[Document]) -> str:
         """Format retrieved documents into context string."""
@@ -106,3 +116,34 @@ You respect the user’s privacy and avoid asking unnecessary questions unless t
         })
         
         return response, context  # Return response and context
+
+    def test_get_relevant_context(self, dataset_id: str, query: str):
+        """Test the get_relevant_context function."""
+        try:
+            print(f"Testing get_relevant_context with dataset_id={dataset_id} and query='{query}'")
+            documents = self.get_relevant_context(dataset_id, query)
+            if documents:
+                print("Relevant documents retrieved:")
+                for i, doc in enumerate(documents, 1):
+                    print(f"Document {i}:")
+                    print(f"Content: {doc.page_content}")
+                    print(f"Metadata: {doc.metadata}")
+            else:
+                print("No relevant documents found.")
+        except Exception as e:
+            print(f"Error during test: {e}")
+
+# Example usage
+if __name__ == "__main__":
+    mongo_client = MongoClient(config.MONGODB_URI)
+    memory = TokenBufferMemoryMongoDB(
+    client=mongo_client,
+    db_name="rag_chat",
+    collection_name="conversations"
+)
+    assistant = ChatAssistant(memory=memory)
+
+    # Example test for get_relevant_context
+    test_dataset_id = "4e003dc7-31f7-4b42-a238-5b7f298d71bb"
+    test_query = "Almaty?"
+    assistant.test_get_relevant_context(dataset_id=test_dataset_id, query=test_query)

@@ -13,6 +13,7 @@ from core.rag.datasource.vector_type import VectorType
 from core.rag.embedding.embedding_base import Embeddings
 from core.rag.datasource.document import Document
 from core.rag.models.dataset import Dataset
+import logging
 
 
 class PGVectorConfig(BaseModel):
@@ -88,43 +89,31 @@ class PGVector(BaseVector):
             self.pool.putconn(conn)
 
     def create(self, texts: list[Document], embeddings: list[list[float]], **kwargs):
-        dimension = len(embeddings[0])
-        print(f"Creating collection with dimension {dimension}...")
-        self._create_collection(dimension)
-        print("Adding texts to vector store...")
-        return self.add_texts(texts, embeddings)
 
+        dimension = len(embeddings[0])
+
+        self._create_collection(dimension)
+
+        return self.add_texts(texts, embeddings)
 
     def add_texts(self, documents: list[Document], embeddings: list[list[float]], **kwargs):
         values = []
         pks = []
-
         for i, doc in enumerate(documents):
-            doc_id = str(uuid.uuid4())  # Generate unique ID
+            doc_id = doc.metadata.get("doc_id", str(uuid.uuid4()))
             pks.append(doc_id)
-
-            # Convert the embedding list into PostgreSQL vector format
-            formatted_embedding = f"[{', '.join(map(str, embeddings[i]))}]"
             values.append(
                 (
                     doc_id,
                     doc.page_content,
                     json.dumps(doc.metadata),
-                    formatted_embedding,
+                    embeddings[i],
                 )
             )
-
         with self._get_cursor() as cur:
-            try:
-                psycopg2.extras.execute_values(
-                    cur,
-                    f"INSERT INTO {self.table_name} (id, text, meta, embedding) VALUES %s",
-                    values,
-                    template="(%s, %s, %s, %s::vector)",
-                )
-            except Exception as e:
-                print(f"Error inserting texts into database: {e}")
-                raise
+            psycopg2.extras.execute_values(
+                cur, f"INSERT INTO {self.table_name} (id, text, meta, embedding) VALUES %s", values
+            )
         return pks
 
 
@@ -160,11 +149,16 @@ class PGVector(BaseVector):
         top_k = kwargs.get("top_k", 4)
 
         with self._get_cursor() as cur:
+            vector_str = "[" + ",".join(str(x) for x in query_vector) + "]"
             cur.execute(
-                f"SELECT meta, text, embedding <=> %s AS distance FROM {self.table_name}"
-                f" ORDER BY distance LIMIT {top_k}",
-                (query_vector,),
-            )
+    f"""
+    SELECT meta, text, embedding <=> %s::vector AS distance
+    FROM {self.table_name}
+    ORDER BY distance
+    LIMIT %s
+    """,
+    (vector_str, top_k,)
+)
             docs = []
             score_threshold = float(kwargs.get("score_threshold") or 0.0)
             for record in cur:

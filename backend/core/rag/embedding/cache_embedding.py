@@ -27,7 +27,6 @@ class CacheEmbedding(Embeddings):
     def _cache_embedding(self, text_hash: str, embedding_data: List[float]):
         """Store embedding in cache."""
         embedding = Embedding(
-            model_name=self.embedding_model.model,
             hash=text_hash,
         )
         embedding.set_embedding(embedding_data)

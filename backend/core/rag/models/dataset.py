@@ -1,64 +1,46 @@
-import json
 import pickle
-from sqlalchemy import (
-    Column,
-    String,
-    Text,
-    DateTime,
-    Integer,
-    func,
-    PrimaryKeyConstraint,
-    Index,
-    text,
-    LargeBinary
-)
-from repository.ext_database import Base, db
+from sqlalchemy.dialects.postgresql import JSONB
+from .engine import db
 from core.rag.models.account import Account
 from app.types.types import StringUUID
+import json
 from sqlalchemy.dialects.postgresql import JSONB
-from pgvector.sqlalchemy import Vector as VECTOR
 
-class Dataset(Base):
+class Dataset(db.Model):
     __tablename__ = "datasets"
     __table_args__ = (
-        Index("dataset_tenant_idx", "tenant_id"),
-        {"extend_existing": True}
+        db.PrimaryKeyConstraint("id", name="dataset_pkey"),
+        db.Index("dataset_tenant_idx", "tenant_id"),
     )
 
-    id = Column(StringUUID, primary_key=True, server_default=text("uuid_generate_v4()"))
-    tenant_id = Column(StringUUID, nullable=False)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    s3_path = Column(String(255))
-    created_by = Column(StringUUID, nullable=False)
-    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
-    index_struct = Column(JSONB, nullable=True)  # Vector metadata
-
+    id = db.Column(StringUUID, nullable=False, server_default=db.text("uuid_generate_v4()"))
+    tenant_id = db.Column(StringUUID, nullable=False)
+    dataset_id = db.Column(StringUUID, nullable=False)
+    s3_path = db.Column(db.String(255))
+    created_by = db.Column(StringUUID, nullable=False)
+    index_struct = db.Column(JSONB, nullable=True)
+    
+    
     @property
     def created_by_account(self):
         return db.get(Account, self.created_by)
-
-    @property
-    def document_count(self):
-        from core.rag.models.dataset import Document
-        return db.query(func.count(Document.id)).filter(Document.dataset_id == self.id).scalar()
-
+    
     @property
     def index_struct_dict(self):
-        # Safely return the JSON structure as a dict
-        return self.index_struct if self.index_struct else None
+        """Return index_struct as a Python dict, even if it's stored as a string."""
+        if not self.index_struct:
+            return None
+        if isinstance(self.index_struct, str):
+            # parse if needed
+            return json.loads(self.index_struct)
+        # already a dict
+        return self.index_struct
 
     def to_dict(self):
         return {
             "id": self.id,
             "tenant_id": self.tenant_id,
-            "name": self.name,
-            "description": self.description,
             "created_by": self.created_by,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-            "document_count": self.document_count,
             "index_struct": self.index_struct,
         }
 
@@ -69,34 +51,38 @@ class Dataset(Base):
         cleaned_id = dataset_id.replace('-', '_')
         return f"collection_{cleaned_id}"
 
-class Document(Base):
+class Document(db.Model):
     __tablename__ = "documents"
     __table_args__ = (
-        PrimaryKeyConstraint("id", name="document_pkey"),
-        Index("document_dataset_id_idx", "dataset_id"),
+        db.PrimaryKeyConstraint("id", name="document_pkey"),
+        db.Index("document_dataset_id_idx", "dataset_id"),
+        db.Index("document_tenant_idx", "tenant_id"),
     )
 
-    id = Column(StringUUID, server_default=text("uuid_generate_v4()"))
-    dataset_id = Column(StringUUID, nullable=False)
-    content = Column(Text, nullable=False)
-    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
+    # initial fields
+    id = db.Column(StringUUID, nullable=False, server_default=db.text("uuid_generate_v4()"))
+    tenant_id = db.Column(StringUUID, nullable=False)
+    dataset_id = db.Column(StringUUID, nullable=False)
 
     @property
     def dataset(self):
         return db.query(Dataset).filter(Dataset.id == self.dataset_id).first()
 
-class Embedding(Base):
+class Embedding(db.Model):
     __tablename__ = "embeddings"
+    __table_args__ = (
+        db.PrimaryKeyConstraint("id", name="embedding_pkey"),
+        db.Index("created_at_idx", "created_at"),
+    )
 
-    id = Column(Integer, primary_key=True)
-    model_name = Column(String(255), nullable=False)
-    hash = Column(String(64), nullable=False)
-    embedding = Column(VECTOR(1536), nullable=False)  # Define as VECTOR(1536)
+    id = db.Column(StringUUID, primary_key=True, server_default=db.text("uuid_generate_v4()"))
+    hash = db.Column(db.String(64), nullable=False)
+    embedding = db.Column(db.LargeBinary, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.text("CURRENT_TIMESTAMP(0)"))
+    provider_name = db.Column(db.String(255), nullable=False, server_default=db.text("''::character varying"))
 
     def set_embedding(self, embedding_data: list[float]):
-        """Directly set the embedding as a list of floats."""
-        self.embedding = embedding_data
+        self.embedding = pickle.dumps(embedding_data, protocol=pickle.HIGHEST_PROTOCOL)
 
     def get_embedding(self) -> list[float]:
-        """Retrieve the embedding as a list of floats."""
-        return self.embedding
+        return pickle.loads(self.embedding)

@@ -25,6 +25,9 @@ from pydantic import BaseModel
 from typing import Optional
 from fastapi.responses import JSONResponse
 
+
+
+
 class ChatRequest(BaseModel):
     message: str
     conversation_id: str
