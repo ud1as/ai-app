@@ -2,16 +2,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from handler.handler import register_routes, file_service, chat_assistant
+from handler.bots import BotHandler  
 from core.memory.memory import TokenBufferMemoryMongoDB
 from core.llm.chat_assistant import ChatAssistant
 from service.file_service import FileService
+from service.bot_service import BotService 
 from configs.config import Settings
 from repository.s3_storage import S3Storage
+from repository.ext_database import db
+from repository.bots import BotRepository
+from service.chat_service import ChatService
 
 def create_app():
     """Initialize and configure the FastAPI app."""
     app = FastAPI(title="RAG System API")
-
+    
     # Configure CORS
     app.add_middleware(
         CORSMiddleware,
@@ -20,10 +25,10 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
+    
     # Load configuration
     configs = Settings()
-
+    
     # Initialize services
     s3_storage = S3Storage(
         bucket_name=configs.S3_BUCKET,
@@ -31,19 +36,25 @@ def create_app():
         aws_secret_access_key=configs.AWS_SECRET_ACCESS_KEY,
         region_name=configs.AWS_REGION
     )
-
+    
     mongo_client = MongoClient(configs.MONGODB_URI)
     memory = TokenBufferMemoryMongoDB(
         client=mongo_client,
         db_name="rag_chat",
         collection_name="conversations"
     )
-
+    
     # Initialize dependencies
     file_service = FileService(s3_storage)
     chat_assistant = ChatAssistant(memory=memory)
-
-    # Register routes with injected dependencies
+    
+    bot_repository = BotRepository(db)
+    bot_service = BotService(bot_repository)
+    chat_service = ChatService(memory, bot_service)
+    bot_handler = BotHandler(bot_service, chat_service)
+    bot_handler = BotHandler(bot_service, chat_service)
+    
     register_routes(app, file_service, chat_assistant)
-
+    app.include_router(bot_handler.router)
+    
     return app

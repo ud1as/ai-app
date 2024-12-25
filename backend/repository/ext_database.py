@@ -21,12 +21,11 @@ POSTGRES_INDEXES_NAMING_CONVENTION = {
     "pk": "%(table_name)s_pkey",
 }
 
-# SQLAlchemy setup
+
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 metadata = MetaData(naming_convention=POSTGRES_INDEXES_NAMING_CONVENTION)
 Base = declarative_base(metadata=metadata)
 
-# Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 db = SessionLocal()

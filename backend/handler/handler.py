@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Depends, Form
 from fastapi.responses import JSONResponse
-from models import ChatRequest, FilePreviewResponse, FileProcessResponse, FileProcessRequest
+from data import ChatRequest, FilePreviewResponse, FileProcessResponse, FileProcessRequest
 from service.file_service import FileService
 from core.llm.chat_assistant import ChatAssistant
 from typing import Optional

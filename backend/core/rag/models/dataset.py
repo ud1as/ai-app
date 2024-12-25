@@ -1,6 +1,6 @@
 import pickle
 from sqlalchemy.dialects.postgresql import JSONB
-from .engine import db
+from models.engine import db
 from core.rag.models.account import Account
 from app.types.types import StringUUID
 import json

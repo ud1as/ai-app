@@ -66,9 +66,7 @@ class DatasetRetrievalService:
                 )
                 full_text_results = vector.search_by_full_text(query=query, top_k=top_k * 2)
 
-                print("[DatasetRetrievalService] Now parsing semantic_results metadata...")
                 self._parse_metadata(semantic_results)
-                print("[DatasetRetrievalService] Now parsing full_text_results metadata...")
                 self._parse_metadata(full_text_results)
 
                 results = self._combine_hybrid_results(
