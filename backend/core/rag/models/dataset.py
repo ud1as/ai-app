@@ -19,7 +19,7 @@ class Dataset(db.Model):
     s3_path = db.Column(db.String(255))
     created_by = db.Column(StringUUID, nullable=False)
     index_struct = db.Column(JSONB, nullable=True)
-    
+    name = db.Column(db.String(255), nullable=False)
     
     @property
     def created_by_account(self):
@@ -41,7 +41,7 @@ class Dataset(db.Model):
             "id": self.id,
             "tenant_id": self.tenant_id,
             "created_by": self.created_by,
-            "index_struct": self.index_struct,
+            "name"  : self.name
         }
 
     @staticmethod

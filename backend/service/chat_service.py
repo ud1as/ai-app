@@ -4,10 +4,9 @@ from core.memory.memory import TokenBufferMemoryMongoDB
 from core.llm.openai_client import OpenAIClient
 from service.dataset_retrieve import DatasetRetrievalService
 from service.bot_service import BotService
-from uuid import UUID
 
 
-DEFAULT_TENANT_ID = UUID('00000000-0000-0000-0000-000000000001')
+DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'
 
 class ChatService:
    def __init__(self, memory: TokenBufferMemoryMongoDB, bot_service: BotService):
@@ -17,19 +16,29 @@ class ChatService:
        self.bot_service = bot_service
 
    def get_relevant_context(self, dataset_id: str, query: str):
-       try:
-           results = self.retrieval_service.retrieve_documents(
-               dataset_id=dataset_id,
-               query=query,
-               search_method="hybrid",
-               top_k=3,
-               score_threshold=0.5,
-               hybrid_weights={"semantic": 0.5, "full_text": 0.5}
-           )
-           return results
-       except Exception as e:
-           print(f"Error during retrieval: {e}")
-           return []
+        try:
+            results = self.retrieval_service.retrieve_documents(
+                dataset_id=dataset_id,
+                query=query,
+                search_method="hybrid",
+                top_k=3,
+                score_threshold=0.6,
+                hybrid_weights={"semantic": 0.5, "full_text": 0.5}
+            )
+
+            # Calculate and log the average score
+            scores = [doc.metadata.get("score", 0) for doc in results]
+            avg_score = sum(scores) / len(scores) if scores else 0
+            print(f"[get_relevant_context] Average score of retrieved documents: {avg_score:.2f}")
+            
+            if avg_score < 0.5:
+                print(f"[get_relevant_context] Average score below threshold, returning empty list")
+                return []
+
+            return results
+        except Exception as e:
+            print(f"[ERROR] Retrieval error for dataset_id {dataset_id}: {e}")
+            return []
 
    def format_context(self, documents):
        if not documents:
@@ -60,41 +69,56 @@ class ChatService:
        return formatted_messages
 
    def chat(self, bot_id: str, message: str, conversation_id: Optional[str] = None) -> Dict:
-    bot = self.bot_service.get_bot(bot_id, DEFAULT_TENANT_ID)
-    if not bot:
-        raise ValueError("Bot not found")
+       try:
+           bot = self.bot_service.get_bot(bot_id, DEFAULT_TENANT_ID)
+           if not bot:
+               raise ValueError(f"Bot with ID {bot_id} not found")
+           
+           if not conversation_id:
+                conversation_id = f"{bot_id}-{datetime.utcnow().isoformat()}"
 
-    config = self.bot_service.get_bot_config(bot_id)
-    dataset_id = self.bot_service.get_dataset_id(bot_id)
-    if not config:
-        raise ValueError("Bot configuration not found")
+           config = self.bot_service.get_bot_config(bot_id)
+           dataset_id = self.bot_service.get_dataset_id(bot_id)
 
-    self.memory.save_message(conversation_id, {
-        "role": "user",
-        "query": message,
-        "created_at": datetime.utcnow(),
-    })
+           print(f"Bot config: {config}")
+           print(f"Dataset ID: {dataset_id.dataset_id}")
 
-    relevant_docs = self.get_relevant_context(dataset_id, message)
-    context = self.format_context(relevant_docs)
+            
+           if not config:
+               raise ValueError(f"Bot configuration for ID {bot_id} not found")
+           if not dataset_id:
+               raise ValueError(f"Dataset for bot ID {bot_id} not found")
 
-    messages = self.memory.get_messages(conversation_id, max_token_limit=2000)
-    openai_messages = self.format_messages_for_openai(
-        messages, 
-        context,
-        config.prompt_template
-    )
+           self.memory.save_message(conversation_id, {
+               "role": "user",
+               "query": message,
+               "created_at": datetime.utcnow(),
+           })
 
-    response = self.openai_client.generate_response(openai_messages)
+           relevant_docs = self.get_relevant_context(dataset_id.dataset_id, message)
+           context = self.format_context(relevant_docs)
 
-    self.memory.save_message(conversation_id, {
-        "role": "assistant",
-        "answer": response,
-        "created_at": datetime.utcnow(),
-    })
+           messages = self.memory.get_messages(conversation_id, max_token_limit=2000)
+           openai_messages = self.format_messages_for_openai(
+               messages, 
+               context,
+               config.prompt_template
+           )
 
-    return {
-        "response": response,
-        "context": context,
-        "conversation_id": conversation_id
-    }
+           response = self.openai_client.generate_response(openai_messages)
+
+           self.memory.save_message(conversation_id, {
+               "role": "assistant",
+               "answer": response,
+               "created_at": datetime.utcnow(),
+           })
+
+           return {
+               "response": response,
+               "context": context,
+               "conversation_id": conversation_id
+           }
+
+       except Exception as e:
+           print(f"[ERROR] ChatService error for bot_id {bot_id}: {e}")
+           raise e

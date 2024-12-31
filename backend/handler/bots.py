@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from data.bots import BotCreateRequest, BotConfigureRequest, MessageResponse, ChatRequest, ChatResponse
 
 DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'
@@ -56,12 +56,8 @@ class BotHandler:
        except Exception as e:
            raise HTTPException(status_code=400, detail=str(e))
 
-   def chat(self, bot_id: str, request: ChatRequest):
+   def chat(self, bot_id: str, request: ChatRequest, tenant_id: str = Header(DEFAULT_TENANT_ID)):
        try:
-           bot = self.bot_service.get_bot(bot_id, DEFAULT_TENANT_ID)
-           if not bot:
-               raise HTTPException(status_code=404, detail="Bot not found")
-
            response = self.chat_service.chat(
                bot_id=bot_id,
                message=request.query

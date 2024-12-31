@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-from handler.handler import register_routes, file_service, chat_assistant
 from handler.bots import BotHandler  
+from handler.knowledge import KnowledgeHandler
 from core.memory.memory import TokenBufferMemoryMongoDB
 from core.llm.chat_assistant import ChatAssistant
 from service.file_service import FileService
@@ -51,10 +51,11 @@ def create_app():
     bot_repository = BotRepository(db)
     bot_service = BotService(bot_repository)
     chat_service = ChatService(memory, bot_service)
-    bot_handler = BotHandler(bot_service, chat_service)
-    bot_handler = BotHandler(bot_service, chat_service)
     
-    register_routes(app, file_service, chat_assistant)
+    bot_handler = BotHandler(bot_service, chat_service)
+    knowledge_handler = KnowledgeHandler(file_service, chat_assistant)
+    
     app.include_router(bot_handler.router)
+    app.include_router(knowledge_handler.router)
     
     return app

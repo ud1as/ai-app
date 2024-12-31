@@ -5,6 +5,7 @@ from core.rag.datasource.vector_factory import Vector
 from core.rag.datasource.document import Document
 from core.rag.text_splitter.text_splitter import TextSplitter
 from repository.ext_database import db
+from repository.file import DatasetRepository
 from core.rag.models.dataset import Dataset
 DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001"  # Replace with a valid UUID
 SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000002"      # Replace with a valid UUID
@@ -12,6 +13,7 @@ SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000002"      # Replace with a va
 class FileService:
     def __init__(self, s3_storage: S3Storage):
         self.s3_storage = s3_storage
+        self.dataset_repository = DatasetRepository
         self.text_splitter = TextSplitter(
             chunk_size=1000,
             chunk_overlap=200
@@ -63,16 +65,14 @@ class FileService:
             print("Inserting into database...")
             print("Creating dataset object...")
             dataset = Dataset(
+                name = filename,
                 dataset_id=file_id,
                 s3_path=s3_filename,
                 tenant_id=tenant_id or DEFAULT_TENANT_ID
             )
-            print(f"Dataset object created: {dataset.to_dict()}")
 
-            print("Adding dataset to the database...")
             db.add(dataset)
 
-            print("Committing to the database...")
             db.commit()
             print("Pass")
 
@@ -87,19 +87,15 @@ class FileService:
                 metadata=base_metadata
             )
             for i, doc in enumerate(documents):
-    # Add a unique doc_id for each chunk, e.g. dataset_id + chunk index
                 doc.metadata["doc_id"] = str(uuid.uuid4())
 
-            print("Creating vector embeddings...")
             vector = Vector(dataset=dataset)
             vector.create(documents)
 
-            print("File processed successfully.")
             return True, dataset.id
 
         except Exception as e:
             db.rollback()
-            print(f"Commit failed: {e}")
             print(f"Error: {e}")
             return False, str(e)
 
@@ -122,3 +118,12 @@ class FileService:
             
         except Exception as e:
             return False, [], str(e)
+        
+        
+    def get_all_datasets(self, tenant_id: str) -> List[dict]:
+        """Fetch all datasets for a tenant."""
+        try:
+            return self.dataset_repository.get_datasets_by_tenant(tenant_id)
+        except Exception as e:
+            print(f"Error retrieving datasets: {e}")
+            return []
