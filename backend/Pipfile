@@ -20,6 +20,10 @@ uvicorn = "*"
 python-multipart = "*"
 pgvector = "*"
 flask-sqlalchemy = "*"
+passlib = "*"
+python-jose = "*"
+email-validator = "*"
+bcrypt = "==4.0.1"
 
 [dev-packages]
 

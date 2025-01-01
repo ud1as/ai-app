@@ -4,7 +4,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mt-20">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Добро пожаловать в FRONT-AI
+            Добро пожаловать в FLITCHAT
           </h1>
           <p className="text-xl text-gray-600 mb-12">
             Ваша платформа для создания AI-ассистентов

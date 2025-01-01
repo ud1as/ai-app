@@ -11,7 +11,7 @@ export default function CreateBotPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: 'ЧАТ-БОТ' as const
+    type: 'Чат-бот' as const
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -81,9 +81,9 @@ export default function CreateBotPage() {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="ЧАТ-БОТ">Chat Bot</option>
-            <option value="АГЕНТ">Agent</option>
-            <option value="РАБОЧИЙ ПРОЦЕСС">Workflow</option>
+            <option value="ЧАТ-БОТ">Чат-Бот</option>
+            <option value="АГЕНТ">Агент</option>
+            <option value="РАБОЧИЙ ПРОЦЕСС">Цепочка-Действий</option>
           </select>
         </div>
 
@@ -92,17 +92,17 @@ export default function CreateBotPage() {
             htmlFor="name" 
             className="block text-sm font-medium text-gray-700"
           >
-            Name
+            Название
           </label>
           <input
             type="text"
             id="name"
-            name="name"
+            name="Имя"
             value={formData.name}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter bot name"
+            placeholder="Назовите своего Бота"
           />
         </div>
 
@@ -111,7 +111,7 @@ export default function CreateBotPage() {
             htmlFor="description" 
             className="block text-sm font-medium text-gray-700"
           >
-            Description
+            Описание
           </label>
           <textarea
             id="description"
@@ -120,7 +120,7 @@ export default function CreateBotPage() {
             onChange={handleChange}
             rows={4}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="Describe what your bot does"
+            placeholder="Что умеет ваш бот"
           />
         </div>
 

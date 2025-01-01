@@ -37,15 +37,8 @@ export default function Navbar() {
           {/* Left section */}
           <div className="flex items-center gap-4">
             <Link href="/" className="text-2xl font-bold text-blue-600 mr-4">
-              FRONT-AI
+              FLITCHAT
             </Link>
-            
-            <div className="flex items-center gap-2">
-              <Link href="https://github.com" className="flex items-center text-gray-600 hover:text-gray-900">
-                <Star className="w-5 h-5 mr-1" />
-                <span>54,491</span>
-              </Link>
-            </div>
           </div>
           
           {/* Center section - Main Navigation */}

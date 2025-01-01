@@ -14,7 +14,7 @@ interface Bot {
   id: string;
   name: string;
   description: string;
-  type?: 'ЧАТ-БОТ' | 'АГЕНТ' | 'РАБОЧИЙ ПРОЦЕСС';
+  type?: 'Чат-Бот' | 'АГЕНТ' | 'РАБОЧИЙ ПРОЦЕСС';
 }
 
 export default function StudioPage() {
@@ -25,7 +25,7 @@ export default function StudioPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: 'ЧАТ-БОТ' as const
+    type: 'Чат-Бот' as const
   })
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -59,7 +59,7 @@ export default function StudioPage() {
       })
       setIsOpen(false)
       fetchBots()
-      setFormData({ name: '', description: '', type: 'ЧАТ-БОТ' })
+      setFormData({ name: '', description: '', type: 'Чат-Бот' })
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to create bot')
     } finally {
@@ -72,19 +72,19 @@ export default function StudioPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Bot Studio</h1>
-          <p className="text-muted-foreground mt-1">Create and manage your AI bots</p>
+          <h1 className="text-3xl font-bold">Студия</h1>
+          <p className="text-muted-foreground mt-1">Создайте своего AI-бота</p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Create New Bot
+              Создать нового бота
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Create New Bot</DialogTitle>
+              <DialogTitle>Создать нового бота</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateBot} className="space-y-4">
               {createError && (
@@ -102,7 +102,7 @@ export default function StudioPage() {
                     <SelectValue placeholder="Select bot type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ЧАТ-БОТ">Chat Bot</SelectItem>
+                    <SelectItem value="Чат-Бот">Chat Bot</SelectItem>
                     <SelectItem value="АГЕНТ">Agent</SelectItem>
                     <SelectItem value="РАБОЧИЙ ПРОЦЕСС">Workflow</SelectItem>
                   </SelectContent>
@@ -173,7 +173,7 @@ export default function StudioPage() {
                       <Settings2 className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {bot.type || 'ЧАТ-БОТ'}
+                      {bot.type || 'Чат-Бот'}
                     </div>
                     {bot.description && (
                       <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
@@ -188,11 +188,11 @@ export default function StudioPage() {
             {bots.length === 0 && (
               <div className="col-span-full p-8 text-center text-muted-foreground">
                 <div className="max-w-sm mx-auto">
-                  <h3 className="font-medium mb-2">No bots yet</h3>
-                  <p className="text-sm mb-4">Create your first bot to get started with AI-powered conversations.</p>
+                  <h3 className="font-medium mb-2">Пока ничего.....</h3>
+                  <p className="text-sm mb-4">Создайте нового бота</p>
                   <Button onClick={() => setIsOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Bot
+                    Создать бота
                   </Button>
                 </div>
               </div>

@@ -4,7 +4,7 @@ export interface Bot {
   id: string;
   name: string;
   description: string;
-  type?: 'ЧАТ-БОТ' | 'АГЕНТ' | 'РАБОЧИЙ ПРОЦЕСС';
+  type?: 'Чат-Бот' | 'АГЕНТ' | 'РАБОЧИЙ ПРОЦЕСС';
 }
 
 export interface BotCreateRequest {

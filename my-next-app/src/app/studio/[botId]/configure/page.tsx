@@ -4,7 +4,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { botApi } from '@/api/endpoints/bots'
+import { knowledgeApi, Dataset } from '@/api/endpoints/knowledge'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
@@ -13,6 +15,7 @@ export default function ConfigureBotPage() {
   const router = useRouter()
   const botId = params.botId as string
 
+  const [datasets, setDatasets] = useState<Dataset[]>([])
   const [config, setConfig] = useState({
     prompt_template: '',
     dataset_id: ''
@@ -30,6 +33,20 @@ export default function ConfigureBotPage() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  useEffect(() => {
+    const fetchDatasets = async () => {
+      try {
+        const fetchedDatasets = await knowledgeApi.getDatasets()
+        setDatasets(fetchedDatasets)
+      } catch (err) {
+        console.error('Error fetching datasets:', err)
+        setError('Failed to load datasets')
+      }
+    }
+
+    fetchDatasets()
+  }, [])
+
   const handleConfigure = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsConfiguring(true)
@@ -43,10 +60,10 @@ export default function ConfigureBotPage() {
       })
       
       console.log('Configuration response:', response)
-      setSuccessMessage('Bot configuration saved successfully')
+      setSuccessMessage('Сохранено')
     } catch (err) {
       console.error('Configuration error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to configure bot')
+      setError(err instanceof Error ? err.message : 'Ошибка')
     } finally {
       setIsConfiguring(false)
     }
@@ -76,28 +93,26 @@ export default function ConfigureBotPage() {
 
   return (
     <div className="container max-w-7xl mx-auto p-6">
-      {/* Header with back navigation */}
       <div className="mb-8">
         <Link 
           href="/studio"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Bot List
+          Назад
         </Link>
-        <h1 className="text-2xl font-bold">Configure Bot</h1>
+        <h1 className="text-2xl font-bold">Настройки</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Side - Configuration */}
         <div className="space-y-6">
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Bot Configuration</h2>
+            <h2 className="text-lg font-semibold mb-4">Конфигурация</h2>
             
             <form onSubmit={handleConfigure} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Prompt Template
+                  Промпт
                 </label>
                 <Textarea
                   value={config.prompt_template}
@@ -106,23 +121,36 @@ export default function ConfigureBotPage() {
                     prompt_template: e.target.value
                   }))}
                   rows={6}
-                  placeholder="Enter prompt template..."
+                  placeholder="Ты ассистент помощник и тебя зовут Алиса ...."
                   className="min-h-[150px] resize-none"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Dataset ID
+                  База Знаний
                 </label>
-                <Input
+                <Select 
                   value={config.dataset_id}
-                  onChange={(e) => setConfig(prev => ({
+                  onValueChange={(value) => setConfig(prev => ({
                     ...prev,
-                    dataset_id: e.target.value
+                    dataset_id: value
                   }))}
-                  placeholder="Enter dataset ID..."
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите Базу Знаний" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {datasets.map((dataset) => (
+                      <SelectItem 
+                        key={dataset.id} 
+                        value={dataset.id}
+                      >
+                        {dataset.name || 'Unnamed Dataset'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {error && (
@@ -142,20 +170,19 @@ export default function ConfigureBotPage() {
                 disabled={isConfiguring}
                 className="w-full"
               >
-                {isConfiguring ? 'Saving Configuration...' : 'Save Configuration'}
+                {isConfiguring ? 'Saving Configuration...' : 'Сохранить Настройки'}
               </Button>
             </form>
           </div>
         </div>
 
-        {/* Right Side - Chat Testing */}
         <div className="rounded-lg border p-6">
-          <h2 className="text-lg font-semibold mb-4">Test Chat</h2>
+          <h2 className="text-lg font-semibold mb-4">Протестируйте своего Бота</h2>
           
           <div className="h-[500px] overflow-y-auto space-y-4 mb-4 p-4 border rounded-lg bg-gray-50">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-8">
-                No messages yet. Start a conversation to test your bot.
+                Начните диалог
               </div>
             )}
             
@@ -183,7 +210,7 @@ export default function ConfigureBotPage() {
                 ...prev,
                 message: e.target.value
               }))}
-              placeholder="Type your message..."
+              placeholder="Привет"
               disabled={isSending}
             />
             <Button 
@@ -191,7 +218,7 @@ export default function ConfigureBotPage() {
               disabled={isSending || !chat.message.trim()}
               className="min-w-[80px]"
             >
-              {isSending ? '...' : 'Send'}
+              {isSending ? '...' : 'Отправить'}
             </Button>
           </form>
         </div>

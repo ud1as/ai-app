@@ -21,7 +21,7 @@ export function CreateBotForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="name">Bot Name</Label>
+        <Label htmlFor="name">Название</Label>
         <Input
           id="name"
           value={name}
@@ -30,7 +30,7 @@ export function CreateBotForm() {
         />
       </div>
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Описание</Label>
         <Textarea
           id="description"
           value={description}
@@ -38,7 +38,7 @@ export function CreateBotForm() {
           required
         />
       </div>
-      <Button type="submit">Create Bot</Button>
+      <Button type="submit">Создать бота</Button>
     </form>
   )
 }

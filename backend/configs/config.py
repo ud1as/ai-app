@@ -35,12 +35,17 @@ class Settings(BaseSettings):
     PGVECTOR_MIN_CONNECTION: int = int(os.getenv("PGVECTOR_MIN_CONNECTION", 1))
     PGVECTOR_MAX_CONNECTION: int = int(os.getenv("PGVECTOR_MAX_CONNECTION", 10))
 
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "secret_key")
+    ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
+
+
     # Aliases for PG compatibility
     PG_USER: str = PGVECTOR_USER
     PG_PASSWORD: str = PGVECTOR_PASSWORD
     PG_HOST: str = PGVECTOR_HOST
     PG_PORT: int = PGVECTOR_PORT
     PG_DATABASE: str = PGVECTOR_DATABASE
+    
 
 
 # Instantiate the settings
