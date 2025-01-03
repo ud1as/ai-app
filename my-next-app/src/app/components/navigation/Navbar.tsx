@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MonitorPlay, BookOpen, Star, Search, Wrench } from 'lucide-react' // Changed Tool to Wrench
+import { MonitorPlay, BookOpen, Star, Search, Wrench } from 'lucide-react'
 
 type NavLinkProps = {
   href: string
@@ -30,6 +30,14 @@ const NavLink = ({ href, children, icon, isHighlighted }: NavLinkProps) => {
 }
 
 export default function Navbar() {
+  const pathname = usePathname()
+
+  // Hide navbar on specific paths
+  const excludedPaths = ['/login', '/register']
+  if (excludedPaths.includes(pathname)) {
+    return null
+  }
+
   return (
     <nav className="border-b border-gray-200 bg-white font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

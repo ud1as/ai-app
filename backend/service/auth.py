@@ -19,17 +19,20 @@ class AuthService:
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return pwd_context.verify(plain_password, hashed_password)
 
-    def create_access_token(self, data: dict, expires_delta: timedelta = None):
+    def create_access_token(self, data: dict, user):
         to_encode = data.copy()
-        expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=15))
-        to_encode.update({"exp": expire})
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        to_encode.update({
+            "exp": expire,
+            "tenant_id": str(user.tenant_id)
+        })
         return jwt.encode(to_encode, self.settings.SECRET_KEY, algorithm=self.settings.ALGORITHM)
 
     def authenticate_user(self, email: str, password: str) -> Optional[str]:
         user = self.user_repository.get_user_by_email(email)
         if not user or not self.verify_password(password, user.password):
             return None
-        token = self.create_access_token({"sub": user.email})
+        token = self.create_access_token({"sub": user.email}, user)
         return token
 
     def register_user(self, email: str, password: str, first_name: str, last_name: str):
@@ -52,3 +55,23 @@ class AuthService:
             return self.user_repository.get_user_by_email(email)
         except JWTError:
             return None
+    
+    def get_user_info_from_token(self, token: str):
+        try:
+            payload = jwt.decode(token, self.settings.SECRET_KEY, algorithms=[self.settings.ALGORITHM])
+            email = payload.get("sub")
+            if email is None:
+                return None
+            user = self.user_repository.get_user_by_email(email)
+            if user:
+                return {
+                    "user_id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "scopes": ["admin"] if user.is_admin else []
+                }
+            return None
+        except JWTError:
+            return None
+

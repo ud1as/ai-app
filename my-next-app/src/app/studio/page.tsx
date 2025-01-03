@@ -1,14 +1,16 @@
-// src/app/studio/page.tsx
-'use client'
-import { useState, useEffect } from 'react'
-import { Plus, Settings2 } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { botApi } from '@/api/endpoints/bots'
-import Link from 'next/link'
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // Redirect unauthenticated users
+import { Plus, Settings2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { botApi } from '@/api/endpoints/bots'; // Replace with your actual bot API endpoint
+import { getToken } from '@/api/endpoints/auth'; // Utility to get token from localStorage
+import Link from 'next/link';
 
 interface Bot {
   id: string;
@@ -18,54 +20,65 @@ interface Bot {
 }
 
 export default function StudioPage() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [bots, setBots] = useState<Bot[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: 'Чат-Бот' as const
-  })
-  const [isCreating, setIsCreating] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
+    type: 'Чат-Бот' as const,
+  });
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchBots()
-  }, [])
+    const token = getToken(); // Retrieve token from localStorage
+    console.log('Retrieved token:', token); // Log the token to the console
+
+    if (!token) {
+      router.push('/login'); // Redirect to login if no token
+    }
+  }, [router]);
+
+  useEffect(() => {
+    fetchBots();
+  }, []);
 
   const fetchBots = () => {
-    setLoading(true)
-    botApi.getAll()
-      .then(response => {
-        setBots(response)
+    setLoading(true);
+    botApi
+      .getAll()
+      .then((response) => {
+        setBots(response);
       })
-      .catch(err => {
-        console.error('Error fetching bots:', err)
-        setError('Failed to load bots')
+      .catch((err) => {
+        console.error('Error fetching bots:', err);
+        setError('Failed to load bots');
       })
-      .finally(() => setLoading(false))
-  }
+      .finally(() => setLoading(false));
+  };
 
   const handleCreateBot = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsCreating(true)
-    setCreateError(null)
+    e.preventDefault();
+    setIsCreating(true);
+    setCreateError(null);
 
     try {
       await botApi.create({
         name: formData.name,
-        description: formData.description
-      })
-      setIsOpen(false)
-      fetchBots()
-      setFormData({ name: '', description: '', type: 'Чат-Бот' })
+        description: formData.description,
+      });
+      setIsOpen(false);
+      fetchBots();
+      setFormData({ name: '', description: '', type: 'Чат-Бот' });
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : 'Failed to create bot')
+      setCreateError(err instanceof Error ? err.message : 'Failed to create bot');
     } finally {
-      setIsCreating(false)
+      setIsCreating(false);
     }
-  }
+  };
 
   return (
     <div className="container max-w-7xl mx-auto p-6">
@@ -96,7 +109,7 @@ export default function StudioPage() {
               <div className="space-y-2">
                 <Select
                   value={formData.type}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as typeof prev.type }))}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value as typeof prev.type }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select bot type" />
@@ -114,7 +127,7 @@ export default function StudioPage() {
                   id="name"
                   placeholder="Bot name"
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   required
                 />
               </div>
@@ -124,7 +137,7 @@ export default function StudioPage() {
                   id="description"
                   placeholder="Bot description"
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   rows={4}
                 />
               </div>
@@ -201,5 +214,5 @@ export default function StudioPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

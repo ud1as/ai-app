@@ -1,11 +1,10 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Header
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from fastapi.responses import JSONResponse
 from data import FilePreviewResponse, FileProcessResponse, FileProcessRequest, DatasetResponse, DatasetRequest
 from service.file_service import FileService
 from core.llm.chat_assistant import ChatAssistant
 from typing import Optional, List
-
-DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'
+from app.utils.dependencies import get_current_user_tenant
 
 class KnowledgeHandler:
     def __init__(self, file_service: FileService, chat_assistant: ChatAssistant):
@@ -19,11 +18,14 @@ class KnowledgeHandler:
         self.router.post("/process", response_model=FileProcessResponse)(self.process_file)
         self.router.get("/datasets", response_model=List[DatasetResponse])(self.get_datasets)
 
-    async def preview_file(self, file: UploadFile = File(...)):
-        """Preview file chunks."""
+    async def preview_file(
+        self, 
+        file: UploadFile = File(...),
+        tenant_id: str = Depends(get_current_user_tenant)
+    ):
         try:
             content = await file.read()
-            success, chunks, error = self.file_service.get_chunk_preview(content)
+            success, chunks, error = self.file_service.get_chunk_preview(content, tenant_id)
             if not success:
                 raise HTTPException(status_code=400, detail=error)
 
@@ -37,13 +39,13 @@ class KnowledgeHandler:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error previewing file: {str(e)}")
 
-    async def process_file(self, file: UploadFile = File(...), tenant_id: str = Form(DEFAULT_TENANT_ID)):
-        """
-        Process file: upload to S3, create chunks, and store vectors.
-        """
+    async def process_file(
+        self, 
+        file: UploadFile = File(...),
+        tenant_id: str = Depends(get_current_user_tenant)
+    ):
         try:
             file_content = await file.read()
-
             success, result = self.file_service.process_file(
                 file_content=file_content,
                 filename=file.filename,
@@ -58,15 +60,12 @@ class KnowledgeHandler:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
-    async def get_datasets(self):
+    async def get_datasets(
+        self,
+        tenant_id: str = Depends(get_current_user_tenant)
+    ):
         try:
-            datasets = self.file_service.get_all_datasets(DEFAULT_TENANT_ID)
+            datasets = self.file_service.get_datasets(tenant_id)
             return [DatasetResponse(**dataset) for dataset in datasets]
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error retrieving datasets: {str(e)}")
-
-# Usage example
-# file_service and chat_assistant need to be instantiated and injected into this handler.
-# app = FastAPI()
-# knowledge_handler = KnowledgeHandler(file_service, chat_assistant)
-# app.include_router(knowledge_handler.router)
