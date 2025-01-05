@@ -10,7 +10,7 @@ from core.rag.datasource.vector_base import BaseVector
 from core.rag.datasource.vector_type import VectorType
 from core.rag.embedding.cache_embedding import CacheEmbedding
 from core.rag.embedding.embedding_base import Embeddings
-from core.rag.datasource.document import Document
+from core.rag.models.document import Document
 from core.rag.models.dataset import Dataset
 from core.rag.embedding.embedding import OpenAIEmbedding
 from core.rag.embedding.cache_embedding import CacheEmbedding

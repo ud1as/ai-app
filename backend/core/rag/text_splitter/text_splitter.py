@@ -2,7 +2,7 @@
 
 from typing import List
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from core.rag.datasource.document import Document
+from core.rag.models.document import Document
 
 class TextSplitter:
     """Text splitter service for chunking documents."""

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
-from core.rag.datasource.document import Document
+from core.rag.models.document import Document
 from core.rag.embedding.embedding_base import Embeddings
 from core.rag.datasource.vector_type import VectorType
 from core.rag.models.dataset import Dataset

@@ -11,7 +11,7 @@ from configs.config import config
 from core.rag.datasource.vector_base import AbstractVectorFactory, BaseVector
 from core.rag.datasource.vector_type import VectorType
 from core.rag.embedding.embedding_base import Embeddings
-from core.rag.datasource.document import Document
+from core.rag.models.document import Document
 from core.rag.models.dataset import Dataset
 import logging
 

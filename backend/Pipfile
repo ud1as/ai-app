@@ -24,6 +24,11 @@ passlib = "*"
 python-jose = "*"
 email-validator = "*"
 bcrypt = "==4.0.1"
+chardet = "*"
+beautifulsoup4 = "*"
+pypdfium2 = "*"
+pandas = "*"
+openpyxl = "*"
 
 [dev-packages]
 

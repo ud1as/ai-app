@@ -1,7 +1,7 @@
 # core/rag/retrieval/retrieval_service.py
 
 from typing import List, Optional
-from core.rag.datasource.document import Document
+from core.rag.models.document import Document
 from core.rag.datasource.vector_factory import Vector
 from core.rag.models.dataset import Dataset
 from repository.ext_database import db

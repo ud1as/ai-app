@@ -28,7 +28,7 @@ class BotRepository:
         try:
             return self.db.query(Bot).filter(
                 Bot.id == bot_id,
-                Bot.tenant_id == tenant_id
+                # Bot.tenant_id == tenant_id
             ).first()
         except Exception as e:
             self.db.rollback()

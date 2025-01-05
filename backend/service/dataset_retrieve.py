@@ -5,7 +5,7 @@ from typing import List, Optional
 
 # Adjust these imports as needed for your codebase
 from core.rag.models.dataset import Dataset  # or wherever your Dataset model actually resides
-from core.rag.datasource.document import Document  # or wherever your Document class is defined
+from core.rag.models.document import Document  # or wherever your Document class is defined
 from repository.ext_database import db  # adjust path if needed
 
 # This is your Vector wrapper that references PGVector or any other store:

@@ -5,7 +5,7 @@ from core.llm.openai_client import OpenAIClient
 from core.rag.retrieve.retrieval_service import RetrievalService, RetrievalMethod
 from core.entities import PromptMessage
 from pymongo import MongoClient
-from core.rag.datasource.document import Document
+from core.rag.models.document import Document
 from configs.config import config
 from service.dataset_retrieve import DatasetRetrievalService
 
